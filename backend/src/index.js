@@ -18,7 +18,7 @@ app.use(express.json())
 app.use(cookieParser())
 
 app.get("/",(req,resp)=>{
-    resp.send("hello world")
+    resp.send("Backend is running")
 })
 
 app.use("/api/user", userRoutes)
@@ -27,9 +27,7 @@ app.use("/api/expense", expenseRoutes)
 
 app.use("/api/stats" , statsRoutes)
 
-app.get("/",(req,resp)=>{
-    resp.send("Backend is running")
-})
+
 
 app.listen(process.env.PORT,()=>{
     console.log("The server has started")
