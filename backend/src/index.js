@@ -27,6 +27,10 @@ app.use("/api/expense", expenseRoutes)
 
 app.use("/api/stats" , statsRoutes)
 
+app.get("/",(req,resp)=>{
+    resp.send("Backend is running")
+})
+
 app.listen(process.env.PORT,()=>{
     console.log("The server has started")
 })
