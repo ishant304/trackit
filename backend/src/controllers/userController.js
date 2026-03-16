@@ -59,34 +59,34 @@ export const loginUser = async (req, resp) => {
 
     const token = jwt.sign(
         { id: existingUser._id },
-        process.env.JWT_SECRET ,
+        process.env.JWT_SECRET,
         { expiresIn: "7d" }
-    )
+    );
 
     resp.cookie("jwt", token, {
-        httpOnly: true,   
+        httpOnly: true,
+        secure: true,
+        sameSite: "None",
         maxAge: 7 * 24 * 60 * 60 * 1000
-    })
-
-    console.log(token)
+    });
 
     return resp.status(200).json({ "msg": "loged in successfully" })
 
 }
 
-export const getProfile = (req,resp)=>{
+export const getProfile = (req, resp) => {
 
     console.log(req.user.username)
-    return resp.status(200).json({"user": req.user})
+    return resp.status(200).json({ "user": req.user })
 
 }
 
-export const logoutUser = (req, resp)=>{
+export const logoutUser = (req, resp) => {
 
-    resp.clearCookie("jwt",{
-        httpOnly : true
+    resp.clearCookie("jwt", {
+        httpOnly: true
     })
 
-    return resp.status(200).json({"msg":"logged out successfully"})
+    return resp.status(200).json({ "msg": "logged out successfully" })
 
 }
