@@ -83,7 +83,7 @@ export const getProfile = (req, resp) => {
 
 export const logoutUser = (req, resp) => {
 
-    resp.cookie("jwt", token, {
+    resp.cookie("jwt", {
         httpOnly: true,
         secure: true,
         sameSite: "None"

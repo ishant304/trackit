@@ -183,6 +183,10 @@ export default function Dashboard() {
         throw new Error("Unable to logout");
       }
 
+      const cookedResp = resp.json()
+
+      console.log(cookedResp)
+
       navigate("/")
 
     }
