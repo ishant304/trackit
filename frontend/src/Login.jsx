@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import logo from "./assets/ChatGPT Image Feb 8, 2026, 02_54_59 AM.png"
-import { faCircleCheck, faCircleExclamation, faEye, faEyeSlash, faSpinner, faXmarkCircle } from '@fortawesome/free-solid-svg-icons';
+import { faCircleCheck, faCircleExclamation, faCircleNotch, faEye, faEyeSlash, faSpinner, faXmarkCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from 'react-router';
 
@@ -11,6 +11,7 @@ function Login() {
   const [serverState, setServerState] = useState("")
   const [showPassword, setShowPassword] = useState(false);
   const [loginError, setLoginError] = useState(false)
+  const [loginLoader, setLoginLoader] = useState(false)
   const [errorMessage, setErrorMessage] = useState("");
   const [formData, setFormData] = useState({
     name: '',
@@ -63,9 +64,11 @@ function Login() {
 
           setLoginError(false);
           setErrorMessage("")
+          setLoginLoader(true)
 
           const rawData = await fetch("https://trackit-xisc.onrender.com/api/user/login", {
             method: "POST",
+            credentials: "include",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(formData)
           })
@@ -77,11 +80,12 @@ function Login() {
           }
 
           navigate("/dashboard")
-
+          setLoginLoader(false)
         }
         catch (err) {
           setLoginError(true);
           setErrorMessage(err.message)
+          setLoginLoader(false)
         }
 
       }
@@ -96,6 +100,7 @@ function Login() {
 
           setLoginError(false);
           setErrorMessage("")
+          setLoginLoader(true)
 
           if(formData.password !== formData.confirmPassword){
             throw new Error("Password does not match");
@@ -114,11 +119,13 @@ function Login() {
             throw new Error(data.msg);
           }
 
+          setLoginLoader(false)
           toggleForm()
         }
         catch (err) {
           setLoginError(true);
           setErrorMessage(err.message)
+          setLoginLoader(false)
         }
       }
 
@@ -192,7 +199,6 @@ function Login() {
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                      {/* <User className="h-5 w-5 text-blue-400" /> */}
                     </div>
                     <input
                       type="text"
@@ -307,6 +313,13 @@ function Login() {
                 type="submit"
                 className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition duration-200 shadow-lg hover:shadow-xl"
               >
+                {
+                  loginLoader && (
+                    <>
+                    <FontAwesomeIcon icon={faCircleNotch} spin className='mr-1.5' />
+                    </>
+                  )
+                }
                 {isLogin ? 'Sign In' : 'Create Account'}
               </button>
             </form>

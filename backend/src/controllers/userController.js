@@ -83,9 +83,11 @@ export const getProfile = (req, resp) => {
 
 export const logoutUser = (req, resp) => {
 
-    resp.clearCookie("jwt", {
-        httpOnly: true
-    })
+    resp.cookie("jwt", token, {
+        httpOnly: true,
+        secure: true,
+        sameSite: "None"
+    });
 
     return resp.status(200).json({ "msg": "logged out successfully" })
 

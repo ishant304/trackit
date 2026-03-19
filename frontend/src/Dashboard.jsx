@@ -1,5 +1,9 @@
 import { useEffect } from 'react';
 import { useState } from 'react';
+import logo from "./assets/image.png"
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBagShopping, faCalendar, faCar, faCircleExclamation, faCircleNotch, faExclamationTriangle, faFileInvoice, faFilm, faHouse, faPen, faPlus, faSackXmark, faSpinner, faTag, faTrash, faUser, faUtensils, faWallet, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { useNavigate } from 'react-router';
 
 export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -8,14 +12,22 @@ export default function Dashboard() {
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showEditExpense, setShowEditExpense] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
+  const [deleteModal, setDeleteModal] = useState(false)
+  const [expenseToDelete, setExpenseToDelete] = useState()
 
-  // Filter states matching your API
   const [fromDate, setFromDate] = useState('');
   const [toDate, setToDate] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
+  const [openUserMenu, setOpenUserMenu] = useState(false);
+  const [user, setUser] = useState()
+  const [expense, setExpense] = useState([])
+  const [expenseLoader, setExpenseLoader] = useState()
+  const [expenseError, setExpenseError] = useState()
+  const [loader, setLoader] = useState(false)
   const [limit] = useState(10);
 
-  // Categories from your backend
+  const navigate = useNavigate();
+
   const categories = [
     { value: 'all', label: 'All' },
     { value: 'rent', label: 'Rent' },
@@ -28,18 +40,6 @@ export default function Dashboard() {
     { value: 'others', label: 'Others' }
   ];
 
-  // TODO: Replace with actual API calls
-  // Mock data matching your API response structure
-  const [expenses] = useState([
-    { _id: '1', amount: 1200, category: 'rent', description: 'Monthly rent payment', date: '2026-03-01' },
-    { _id: '2', amount: 156.50, category: 'food', description: 'Weekly groceries from supermarket', date: '2026-03-07' },
-    { _id: '3', amount: 89.30, category: 'bills', description: 'Electricity bill for February', date: '2026-03-05' },
-    { _id: '4', amount: 15.99, category: 'entertainment', description: 'Netflix monthly subscription', date: '2026-03-03' },
-    { _id: '5', amount: 65.00, category: 'travel', description: 'Gas station refuel', date: '2026-03-06' },
-    { _id: '6', amount: 78.20, category: 'food', description: 'Restaurant dinner with friends', date: '2026-03-04' },
-    { _id: '7', amount: 124.99, category: 'shopping', description: 'Online shopping - clothing', date: '2026-03-07' },
-    { _id: '8', amount: 45.00, category: 'misc', description: 'Miscellaneous household items', date: '2026-03-02' },
-  ]);
 
   // Mock summary data from /api/summary endpoint
   const [summary] = useState({
@@ -50,32 +50,61 @@ export default function Dashboard() {
     minExpense: 15.99
   });
 
-  useEffect(()=>{
+  useEffect(() => {
 
     getProfile();
+    getExpenses();
 
-  },[])
+  }, [])
 
-  const getProfile = async ()=>{
+  const getProfile = async () => {
 
-    try{
+    try {
 
-      const rawData = await fetch("https://trackit-xisc.onrender.com/api/user/profile",{
+      const rawData = await fetch("https://trackit-xisc.onrender.com/api/user/profile", {
         method: "GET",
         credentials: "include"
       })
 
       const data = await rawData.json();
-      
-      console.log(data)
+
+      setUser(data.user)
+
     }
-    catch(err){
+    catch (err) {
       console.error(err)
     }
 
   }
 
-  // Mock category summary from /api/summary/category endpoint
+  const getExpenses = async () => {
+
+    setExpenseLoader(true)
+    setExpenseError(false)
+    try {
+
+      const rawData = await fetch("https://trackit-xisc.onrender.com/api/expense", {
+        method: "GET",
+        credentials: "include"
+      })
+
+      if (!rawData.ok) {
+        throw new Error("Server error");
+      }
+      const data = await rawData.json()
+      console.log(data.expenses)
+
+      setExpense(data.expenses)
+      setExpenseLoader(false)
+
+    }
+    catch (err) {
+      console.error(err)
+      setExpenseError(true)
+    }
+
+  }
+
   const [categorySummary] = useState([
     { _id: 'rent', totalExpense: 1200, countOfExpense: 1, averageExpense: 1200, maxExpense: 1200, minExpense: 1200 },
     { _id: 'food', totalExpense: 234.70, countOfExpense: 2, averageExpense: 117.35, maxExpense: 156.50, minExpense: 78.20 },
@@ -86,29 +115,82 @@ export default function Dashboard() {
     { _id: 'entertainment', totalExpense: 15.99, countOfExpense: 1, averageExpense: 15.99, maxExpense: 15.99, minExpense: 15.99 },
   ]);
 
+
+  const getCategoryIcon = (category) => {
+    const icons = {
+      food: faUtensils,
+      travel: faCar,
+      entertainment: faFilm,
+      shopping: faBagShopping,
+      rent: faHouse,
+      bills: faFileInvoice,
+      misc: faTag
+    };
+    return icons[category] || faTag;
+  }
+
   const [totalPages] = useState(1);
 
-  // Filter expenses locally (in real app, filtering happens server-side via API)
-  let filteredExpenses = expenses.filter(expense => {
+  let filteredExpenses = expense.filter(expense => {
     const matchesSearch = expense.description.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesCategory = selectedCategory === 'all' || expense.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
-  // TODO: Connect to your API endpoints
   const handleAddExpense = async (e) => {
     e.preventDefault();
     const formData = new FormData(e.target);
-    const expenseData = {
-      amount: parseFloat(formData.get('amount')),
-      category: formData.get('category'),
-      description: formData.get('description'),
-      date: formData.get('date')
-    };
+    const data = Object.fromEntries(formData.entries());
+    data.amount = parseFloat(data.amount)
+    console.log(data)
 
-    console.log('POST /api/expenses', expenseData);
+    try {
+      setLoader(true)
+
+      const rawData = await fetch("https://trackit-xisc.onrender.com/api/expense", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data)
+      })
+      if (!rawData.ok) {
+        throw new Error("Expense not posted on server");
+      }
+      await getExpenses()
+    }
+    catch (err) {
+      console.error(err)
+    }
+    finally {
+      setLoader(false)
+    }
     setShowAddExpense(false);
   };
+
+
+  const handleLogout = async () => {
+
+    try{
+
+      const resp = await fetch("https://trackit-xisc.onrender.com/api/user/logout",{
+        method: "GET",
+        credentials: "include"
+      })
+      
+      if(!resp.ok){
+        throw new Error("Unable to logout");
+      }
+
+      navigate("/")
+
+    }
+    catch(err){
+      console.error(err)
+    }
+
+  }
 
   const handleUpdateExpense = async (e) => {
     e.preventDefault();
@@ -126,9 +208,42 @@ export default function Dashboard() {
   };
 
   const handleDeleteExpense = async (id) => {
-    if (!confirm('Are you sure you want to delete this expense?')) return;
-    console.log('DELETE /api/expenses/' + id);
+    setDeleteModal(true);
+    setExpenseToDelete(id)
   };
+
+  const handleCancelDelete = async () => {
+    setDeleteModal(false)
+  }
+
+  const handleConfirmDelete = async () => {
+
+    if (!expenseToDelete) return;
+
+    try{
+      setLoader(true)
+
+      const resp = await fetch(`https://trackit-xisc.onrender.com/api/expense/${expenseToDelete}`, {
+        method: "DELETE",
+        credentials: "include"
+      })
+
+      if(!resp.ok){
+        throw new Error("Failed to delete expense");
+      }
+
+      await getExpenses()
+    }
+    catch(err){
+      console.error(err)
+    }
+    finally{
+      setLoader(false)
+      setDeleteModal(false)
+      setExpenseToDelete(null)
+    }
+
+  }
 
   const openEditModal = (expense) => {
     setEditingExpense(expense);
@@ -151,28 +266,88 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-linear-to-br from-blue-50 via-white to-indigo-50">
 
-      {/* Header */}
       <header className="border-b border-blue-100 shadow-sm sticky top-0 z-20 backdrop-blur-sm bg-white/90">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-12 h-12 bg-linear-to-br from-blue-600 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg rotate-3 hover:rotate-0 transition-transform">
-                <span className="text-3xl">💰</span>
+              <div className="w-12 sm:w-16 flex items-center justify-center rotate-3 hover:rotate-0 transition-transform">
+                <img src={logo} alt="logo" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                <p className="sm:text-2xl text-xl font-bold bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
                   TracKit
-                </h1>
-                <p className="text-sm text-gray-600 font-medium">Expense Dashboard</p>
+                </p>
+                <p className="sm:text-sm text-xs text-gray-600 font-medium">Expense Dashboard</p>
               </div>
             </div>
-            <button
-              onClick={() => setShowAddExpense(true)}
-              className="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white px-6 py-2.5 rounded-xl flex items-center space-x-2 transition shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold"
-            >
-              <span className="text-xl">➕</span>
-              <span>Add Expense</span>
-            </button>
+
+            <div className="flex flex-row justify-center">
+
+              <button
+                onClick={() => setShowAddExpense(true)}
+                className="bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white sm:px-6 px-3 rounded-xl flex items-center space-x-2 transition shadow-lg hover:shadow-xl transform hover:scale-105 font-semibold sm:text-base text-sm py-2.5"
+              >
+                <span className="text-base sm:text-xl"><FontAwesomeIcon icon={faPlus} /></span>
+                <span>Add Expense</span>
+              </button>
+              <div className="relative">
+
+                <button
+                  onClick={() => setOpenUserMenu(!openUserMenu)}
+                  className="ml-3.5 w-12 h-12 rounded-full overflow-hidden 
+                  border border-blue-200 
+                  hover:ring-2 hover:ring-blue-500 
+                  transition duration-200"
+                >
+                  <FontAwesomeIcon icon={faUser} className='text-xl text-blue-400' />
+                </button>
+
+                {openUserMenu && (
+                  <div className="absolute right-0 mt-3 w-64 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-50">
+
+                    <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
+
+                      <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold">
+                        {user.username[0].toUpperCase()}
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {user.username}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          {user.name}
+                        </p>
+                      </div>
+
+                    </div>
+
+                    <div className="mt-3 text-sm text-gray-600">
+                      <p className="text-xs text-gray-400 mb-1">
+                        Account created
+                      </p>
+
+                      <p className="font-medium">
+                        {new Date(user.createdAt).toLocaleDateString("en-US", {
+                          year: "numeric",
+                          month: "short",
+                          day: "numeric"
+                        })}
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={handleLogout}
+                      className="mt-4 w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2 rounded-lg text-sm font-semibold transition"
+                    >
+                      Logout
+                    </button>
+
+                  </div>
+                )}
+
+              </div>
+            </div>
           </div>
         </div>
       </header>
@@ -198,14 +373,14 @@ export default function Dashboard() {
                 <button
                   onClick={() => setShowFilters(!showFilters)}
                   className={`flex items-center space-x-2 px-5 py-3 rounded-xl transition-all font-semibold ${showFilters
-                      ? 'bg-blue-600 text-white shadow-lg'
-                      : 'border-2 border-gray-200 hover:bg-gray-50 text-gray-700'
+                    ? 'bg-blue-600 text-white shadow-lg'
+                    : 'border-2 border-gray-200 hover:bg-gray-50 text-gray-700'
                     }`}
                 >
                   <span className="text-xl">🎚️</span>
                   <span>Filters</span>
                 </button>
-                
+
               </div>
 
               {showFilters && (
@@ -239,8 +414,8 @@ export default function Dashboard() {
                   key={category.value}
                   onClick={() => setSelectedCategory(category.value)}
                   className={`px-5 py-2.5 rounded-full font-semibold transition-all transform hover:scale-105 ${selectedCategory === category.value
-                      ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
-                      : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-300 shadow-sm'
+                    ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
+                    : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-300 shadow-sm'
                     }`}
                 >
                   {category.label}
@@ -260,51 +435,147 @@ export default function Dashboard() {
               </div>
 
               {/* Expense Items */}
-              <div className="divide-y-2 divide-gray-100">
-                {filteredExpenses.length === 0 ? (
-                  <div className="p-12 text-center">
-                    <span className="text-6xl mb-3 block">💵</span>
-                    <p className="text-gray-500 font-medium">No expenses found</p>
+              {expenseLoader ? (
+                <div className="p-10 flex flex-col items-center justify-center gap-4">
+
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50">
+                    <FontAwesomeIcon
+                      icon={faCircleNotch}
+                      spin
+                      className="text-blue-500 text-2xl"
+                    />
                   </div>
-                ) : (
-                  filteredExpenses.map((expense) => (
-                    <div key={expense._id} className="p-5 hover:bg-blue-50 transition">
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-3 mb-2">
-                            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border-2 border-blue-200">
-                              <span className="mr-1">🏷️</span>
-                              {getCategoryLabel(expense.category)}
-                            </span>
-                            <span className="text-sm text-gray-500 font-medium flex items-center">
-                              <span className="mr-1">📅</span>
-                              {formatDate(expense.date)}
-                            </span>
-                          </div>
-                          <p className="text-gray-900 font-medium mb-1">{expense.description}</p>
-                          <p className="text-2xl font-bold text-red-600">${expense.amount.toFixed(2)}</p>
-                        </div>
-                        <div className="flex items-center space-x-2 ml-4">
-                          <button
-                            onClick={() => openEditModal(expense)}
-                            className="p-2 text-blue-600 hover:bg-blue-100 rounded-lg transition text-xl"
-                            title="Edit"
-                          >
-                            ✏️
-                          </button>
-                          <button
-                            onClick={() => handleDeleteExpense(expense._id)}
-                            className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition text-xl"
-                            title="Delete"
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </div>
+
+                  <div className="text-center">
+                    <p className="text-gray-800 text-xl font-semibold">
+                      Fetching your expenses…
+                    </p>
+                    <p className="text-gray-400 text-base mt-1 animate-pulse">
+                      Preparing your dashboard
+                    </p>
+                  </div>
+
+                </div>
+              ) : expenseError ?
+                (
+                  <div className="p-10 flex flex-col items-center justify-center gap-4">
+
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50">
+                      <FontAwesomeIcon
+                        icon={faCircleExclamation}
+                        className="text-blue-400 text-xl"
+                      />
                     </div>
-                  ))
-                )}
-              </div>
+
+                    <div className="text-center">
+                      <p className="text-gray-800 font-semibold">
+                        Couldn’t load your expenses
+                      </p>
+                      <p className="text-gray-400 text-sm mt-1">
+                        The server might be waking up. Try again in a moment.
+                      </p>
+                    </div>
+
+                    <button
+                      onClick={getExpenses}
+                      className="mt-2 px-4 py-2 text-sm font-semibold text-blue-600 bg-blue-50 rounded-lg border border-blue-200 hover:bg-blue-100 transition"
+                    >
+                      Retry
+                    </button>
+
+                  </div>
+                ) :
+                (
+                  <div className="divide-y-2 divide-gray-100">
+                    {filteredExpenses.length === 0 ? (
+                      <div className="p-12 flex flex-col items-center justify-center text-center">
+
+                        <div className="relative mb-4">
+                          <div className="absolute inset-0 rounded-full bg-linear-to-r from-blue-200 to-indigo-200 blur-md opacity-60"></div>
+                          <div className="relative w-14 h-14 flex items-center justify-center rounded-full bg-white border border-blue-100 shadow-sm">
+                            <FontAwesomeIcon icon={faSackXmark} className="text-blue-500 text-xl" />
+                          </div>
+                        </div>
+
+                        <p className="text-gray-800 font-semibold text-lg">
+                          No expense found
+                        </p>
+
+                        <p className="text-gray-400 text-sm mt-1">
+                          Start adding expenses to see them here
+                        </p>
+
+                        <button
+                          onClick={() => setShowAddExpense(true)}
+                          className="mt-5 px-5 py-2.5 bg-linear-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-indigo-700 transition shadow-md"
+                        >
+                          <FontAwesomeIcon icon={faPlus} /> Add Expense
+                        </button>
+
+                      </div>
+                    ) : (
+                      filteredExpenses.map((expense) => (
+                        <div key={expense._id} className="group relative bg-white rounded-xl border-2 border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all duration-300 overflow-hidden">
+
+                          <div className="p-6 pl-8">
+                            <div className="flex items-start justify-between gap-4">
+
+                              <div className="flex-1 min-w-0">
+
+                                <div className="flex items-center gap-3 mb-3 flex-wrap">
+                                  <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                                    <FontAwesomeIcon icon={getCategoryIcon(expense.category)} />
+                                    {getCategoryLabel(expense.category)}
+                                  </span>
+                                  <span className="text-sm text-gray-500 font-medium flex items-center gap-1.5">
+
+                                    <time dateTime={expense.date}>{formatDate(expense.date)}</time>
+                                  </span>
+                                </div>
+
+                                <p className="text-gray-800 font-medium mb-3 text-base leading-relaxed">
+                                  {expense.description || (
+                                    <span className="text-gray-400 italic">No description provided</span>
+                                  )}
+                                </p>
+
+                                <div className="flex items-baseline gap-2">
+                                  <span className="text-3xl font-bold text-blue-500  bg-clip-text ">
+                                    ₹{new Intl.NumberFormat("en-IN", {
+                                      maximumFractionDigits: 0
+                                    }).format(expense.amount)}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Action Buttons */}
+                              <div className="flex items-start gap-2 shrink-0">
+                                <button
+                                  onClick={() => openEditModal(expense)}
+                                  className="w-12 h-12 flex items-center justify-center rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-100 transition"
+                                >
+                                  <FontAwesomeIcon icon={faPen} className="text-base" />
+                                </button>
+
+                                <button
+                                  onClick={() => handleDeleteExpense(expense._id)}
+                                  className="w-12 h-12 flex items-center justify-center rounded-lg bg-blue-50 text-blue-500 hover:bg-blue-100 transition"
+                                >
+                                  <FontAwesomeIcon icon={faTrash} className="text-base" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )
+
+              }
+
+
+
 
               {/* Pagination */}
               {totalPages > 1 && (
@@ -435,32 +706,6 @@ export default function Dashboard() {
               </div>
             </div>
 
-
-            {/* Quick Info */}
-            <div className="bg-linear-to-br from-blue-600 to-indigo-600 rounded-2xl shadow-lg p-6 text-white">
-              <h2 className="text-lg font-bold mb-4">Quick Info</h2>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between py-2 border-b border-white/20">
-                  <span className="text-blue-100 font-medium">Categories</span>
-                  <span className="text-2xl font-bold">{categorySummary.length}</span>
-                </div>
-
-                <div className="flex items-center justify-between py-2 border-b border-white/20">
-                  <span className="text-blue-100 font-medium">Top Category</span>
-                  <span className="text-lg font-bold">
-                    {getCategoryLabel(categorySummary[0]?._id || "N/A")}
-                  </span>
-                </div>
-
-                <div className="flex items-center justify-between py-2">
-                  <span className="text-blue-100 font-medium">Page</span>
-                  <span className="text-2xl font-bold">
-                    {currentPage}/{totalPages}
-                  </span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -475,7 +720,7 @@ export default function Dashboard() {
                 onClick={() => setShowAddExpense(false)}
                 className="text-gray-400 hover:text-gray-600 transition text-2xl"
               >
-                ❌
+                <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
             <form onSubmit={handleAddExpense} className="space-y-4">
@@ -484,7 +729,7 @@ export default function Dashboard() {
                 <input
                   type="number"
                   name="amount"
-                  step="0.01"
+                  step="1"
                   placeholder="0.00"
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-medium"
                   required
@@ -507,6 +752,7 @@ export default function Dashboard() {
                 <input
                   type="date"
                   name="date"
+                  max={new Date().toLocaleDateString("en-CA")}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-medium"
                   required
                 />
@@ -518,19 +764,84 @@ export default function Dashboard() {
                   placeholder="What was this expense for?"
                   rows="3"
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none resize-none font-medium"
-                  required
                 ></textarea>
               </div>
               <button
                 type="submit"
                 className="w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 rounded-xl font-bold transition shadow-lg hover:shadow-xl transform hover:scale-105"
               >
+                {
+                  loader && (
+                    <>
+                      <FontAwesomeIcon icon={faCircleNotch} spin className='mr-1.5' />
+                    </>
+                  )
+                }
                 Add Expense
               </button>
             </form>
           </div>
         </div>
       )}
+
+      {/* Confirm delete modal */}
+      {
+        deleteModal && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6 transform transition-all">
+
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Delete Expense
+                </h2>
+                <button
+                  onClick={handleCancelDelete}
+                  className="text-gray-400 hover:text-gray-600 transition text-xl"
+                >
+                  <FontAwesomeIcon icon={faXmark} />
+                </button>
+              </div>
+
+              <div className="text-center mb-6">
+
+                <div className="w-14 h-14 mx-auto flex items-center justify-center rounded-full bg-blue-50 mb-3">
+                  <FontAwesomeIcon icon={faTrash} className="text-blue-500 text-xl" />
+                </div>
+
+                <p className="text-gray-800 font-semibold">
+                  Are you sure you want to delete this expense?
+                </p>
+
+                <p className="text-gray-400 text-sm mt-1">
+                  This action cannot be undone
+                </p>
+              </div>
+
+              <div className="flex gap-3">
+
+                <button
+                  onClick={handleCancelDelete}
+                  className="flex-1 py-2.5 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold hover:bg-gray-50 transition"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={handleConfirmDelete}
+                  className="flex-1 py-2.5 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 text-white font-semibold hover:from-blue-700 hover:to-indigo-700 transition shadow-md hover:shadow-lg flex items-center justify-center"
+                >
+                  {loader && (
+                    <FontAwesomeIcon icon={faCircleNotch} spin className="mr-2" />
+                  )}
+                  Delete
+                </button>
+
+              </div>
+
+            </div>
+          </div>
+        )
+      }
 
       {/* Edit Expense Modal */}
       {showEditExpense && editingExpense && (
