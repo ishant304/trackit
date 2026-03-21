@@ -143,6 +143,11 @@ export const getCategorySummary = async (req,resp) => {
             }
         },
         {
+            $sort : {
+                totalExpense : -1
+            }
+        },
+        {
             $project : {
                 _id : 1,
                 totalExpense : 1,

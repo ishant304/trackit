@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useState } from 'react';
 import logo from "./assets/image.png"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBagShopping, faCalendar, faCar, faCircleExclamation, faCircleNotch, faExclamationTriangle, faFileInvoice, faFilm, faHouse, faPen, faPlus, faSackXmark, faSpinner, faTag, faTrash, faUser, faUtensils, faWallet, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faBagShopping, faCalendar, faCar, faChartLine, faChartSimple, faChevronLeft, faChevronRight, faCircleExclamation, faCircleNotch, faExclamationTriangle, faFileInvoice, faFilm, faHouse, faPen, faPlus, faSackXmark, faSpinner, faTag, faTrash, faUser, faUtensils, faWallet, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router';
 
 export default function Dashboard() {
@@ -14,16 +14,21 @@ export default function Dashboard() {
   const [editingExpense, setEditingExpense] = useState(null);
   const [deleteModal, setDeleteModal] = useState(false)
   const [expenseToDelete, setExpenseToDelete] = useState()
-
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
   const [openUserMenu, setOpenUserMenu] = useState(false);
   const [user, setUser] = useState()
   const [expense, setExpense] = useState([])
+  const [expenseSummary, setExpenseSummary] = useState()
+  const [categorySummary, setCategorySummary] = useState()
+
   const [expenseLoader, setExpenseLoader] = useState()
   const [expenseError, setExpenseError] = useState()
   const [loader, setLoader] = useState(false)
+
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalExpense, setTotalExpense] = useState(1)
+  const [fromDate, setFromDate] = useState('');
+  const [toDate, setToDate] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(10);
 
   const navigate = useNavigate();
@@ -40,22 +45,15 @@ export default function Dashboard() {
     { value: 'others', label: 'Others' }
   ];
 
-
-  // Mock summary data from /api/summary endpoint
-  const [summary] = useState({
-    countOfExpense: 8,
-    totalExpense: 1774.98,
-    averageExpense: 221.87,
-    maxExpense: 1200,
-    minExpense: 15.99
-  });
+  useEffect(() => {
+    getProfile();
+    getExpenseSummary();
+    getCategorySummary();
+  }, [])
 
   useEffect(() => {
-
-    getProfile();
-    getExpenses();
-
-  }, [])
+    getExpenses()
+  }, [currentPage])
 
   const getProfile = async () => {
 
@@ -83,7 +81,7 @@ export default function Dashboard() {
     setExpenseError(false)
     try {
 
-      const rawData = await fetch("https://trackit-xisc.onrender.com/api/expense", {
+      const rawData = await fetch(`https://trackit-xisc.onrender.com/api/expense?page=${currentPage}`, {
         method: "GET",
         credentials: "include"
       })
@@ -92,9 +90,11 @@ export default function Dashboard() {
         throw new Error("Server error");
       }
       const data = await rawData.json()
-      console.log(data.expenses)
+
+      setTotalPages(data.totalPage)
 
       setExpense(data.expenses)
+      setTotalExpense(data.totalExpense)
       setExpenseLoader(false)
 
     }
@@ -105,15 +105,31 @@ export default function Dashboard() {
 
   }
 
-  const [categorySummary] = useState([
-    { _id: 'rent', totalExpense: 1200, countOfExpense: 1, averageExpense: 1200, maxExpense: 1200, minExpense: 1200 },
-    { _id: 'food', totalExpense: 234.70, countOfExpense: 2, averageExpense: 117.35, maxExpense: 156.50, minExpense: 78.20 },
-    { _id: 'shopping', totalExpense: 124.99, countOfExpense: 1, averageExpense: 124.99, maxExpense: 124.99, minExpense: 124.99 },
-    { _id: 'bills', totalExpense: 89.30, countOfExpense: 1, averageExpense: 89.30, maxExpense: 89.30, minExpense: 89.30 },
-    { _id: 'travel', totalExpense: 65.00, countOfExpense: 1, averageExpense: 65.00, maxExpense: 65.00, minExpense: 65.00 },
-    { _id: 'misc', totalExpense: 45.00, countOfExpense: 1, averageExpense: 45.00, maxExpense: 45.00, minExpense: 45.00 },
-    { _id: 'entertainment', totalExpense: 15.99, countOfExpense: 1, averageExpense: 15.99, maxExpense: 15.99, minExpense: 15.99 },
-  ]);
+  const getExpenseSummary = async ()=>{
+
+    const rawData = await fetch("https://trackit-xisc.onrender.com/api/stats/summary",{
+      method: "GET",
+      credentials: "include"
+    })
+
+    const data = await rawData.json()
+
+    setExpenseSummary(data.data)
+
+  }
+
+  const getCategorySummary = async ()=>{
+    
+    const rawData = await fetch("https://trackit-xisc.onrender.com/api/stats/category",{
+      method: "GET",
+      credentials: "include"
+    })
+
+    const data = await rawData.json()
+
+    setCategorySummary(data.data)
+
+  }
 
 
   const getCategoryIcon = (category) => {
@@ -129,7 +145,6 @@ export default function Dashboard() {
     return icons[category] || faTag;
   }
 
-  const [totalPages] = useState(1);
 
   let filteredExpenses = expense.filter(expense => {
     const matchesSearch = expense.description.toLowerCase().includes(searchQuery.toLowerCase());
@@ -170,45 +185,43 @@ export default function Dashboard() {
   };
 
 
-  const handleLogout = async () => {
-
-    try{
-
-      const resp = await fetch("https://trackit-xisc.onrender.com/api/user/logout",{
-        method: "GET",
-        credentials: "include"
-      })
-      
-      if(!resp.ok){
-        throw new Error("Unable to logout");
-      }
-
-      const cookedResp = await resp.json()
-
-      console.log(cookedResp)
-
-      navigate("/")
-
-    }
-    catch(err){
-      console.error(err)
-    }
-
-  }
+  const openEditModal = (expense) => {
+    setEditingExpense(expense);
+    setShowEditExpense(true);
+  };
 
   const handleUpdateExpense = async (e) => {
     e.preventDefault();
-    const formData = new FormData(e.target);
-    const expenseData = {
-      amount: parseFloat(formData.get('amount')),
-      category: formData.get('category'),
-      description: formData.get('description'),
-      date: formData.get('date')
-    };
+    const rawFormData = new FormData(e.target);
+    const formData = Object.fromEntries(rawFormData.entries())
+    formData.amount = parseFloat(formData.amount)
+    console.log(formData)
 
-    console.log('PUT /api/expenses/' + editingExpense._id, expenseData);
-    setShowEditExpense(false);
-    setEditingExpense(null);
+    try {
+      setLoader(true)
+
+      const resp = await fetch(`https://trackit-xisc.onrender.com/api/expense/${editingExpense._id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData)
+      })
+
+      if (!resp.ok) {
+        throw new Error("Can not edit the response");
+      }
+
+      await getExpenses()
+    }
+    catch (err) {
+      console.error(err)
+    }
+    finally {
+      setShowEditExpense(false);
+      setEditingExpense(null);
+    }
   };
 
   const handleDeleteExpense = async (id) => {
@@ -224,7 +237,7 @@ export default function Dashboard() {
 
     if (!expenseToDelete) return;
 
-    try{
+    try {
       setLoader(true)
 
       const resp = await fetch(`https://trackit-xisc.onrender.com/api/expense/${expenseToDelete}`, {
@@ -232,16 +245,16 @@ export default function Dashboard() {
         credentials: "include"
       })
 
-      if(!resp.ok){
+      if (!resp.ok) {
         throw new Error("Failed to delete expense");
       }
 
       await getExpenses()
     }
-    catch(err){
+    catch (err) {
       console.error(err)
     }
-    finally{
+    finally {
       setLoader(false)
       setDeleteModal(false)
       setExpenseToDelete(null)
@@ -249,10 +262,45 @@ export default function Dashboard() {
 
   }
 
-  const openEditModal = (expense) => {
-    setEditingExpense(expense);
-    setShowEditExpense(true);
-  };
+  const handleLogout = async () => {
+
+    try {
+
+      setLoader(true)
+
+      const resp = await fetch("https://trackit-xisc.onrender.com/api/user/logout", {
+        method: "GET",
+        credentials: "include"
+      })
+
+      if (!resp.ok) {
+        throw new Error("Unable to logout");
+      }
+
+      const cookedResp = await resp.json()
+
+      console.log(cookedResp)
+
+      setLoader(false)
+      navigate("/")
+
+    }
+    catch (err) {
+      console.error(err)
+    }
+
+  }
+
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      
+      const res = await fetch("https://trackit-xisc.onrender.com")
+      const data = await res.text()
+
+    }, 5 * 60 * 1000);  
+
+    return () => clearInterval(interval); 
+  }, []);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -312,15 +360,15 @@ export default function Dashboard() {
                     <div className="flex items-center gap-3 pb-3 border-b border-gray-100">
 
                       <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-semibold">
-                        {user.username[0].toUpperCase()}
+                        {user?.username[0].toUpperCase()}
                       </div>
 
                       <div>
                         <p className="text-sm font-semibold text-gray-900">
-                          {user.username}
+                          {user?.username}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {user.name}
+                          {user?.name}
                         </p>
                       </div>
 
@@ -332,7 +380,7 @@ export default function Dashboard() {
                       </p>
 
                       <p className="font-medium">
-                        {new Date(user.createdAt).toLocaleDateString("en-US", {
+                        {new Date(user?.createdAt).toLocaleDateString("en-US", {
                           year: "numeric",
                           month: "short",
                           day: "numeric"
@@ -344,6 +392,13 @@ export default function Dashboard() {
                       onClick={handleLogout}
                       className="mt-4 w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-2 rounded-lg text-sm font-semibold transition"
                     >
+                      {
+                        loader && (
+                          <>
+                            <FontAwesomeIcon icon={faCircleNotch} spin className='mr-1.5' />
+                          </>
+                        )
+                      }
                       Logout
                     </button>
 
@@ -433,7 +488,7 @@ export default function Dashboard() {
                 <div className="flex items-center justify-between">
                   <h2 className="text-xl font-bold text-gray-900">Expenses</h2>
                   <span className="text-sm font-semibold text-gray-600 bg-white px-3 py-1.5 rounded-full border-2 border-blue-200">
-                    {filteredExpenses.length} results
+                    {totalExpense} results
                   </span>
                 </div>
               </div>
@@ -590,19 +645,20 @@ export default function Dashboard() {
                       disabled={currentPage === 1}
                       className="flex items-center space-x-2 px-4 py-2 border-2 border-gray-200 rounded-lg hover:bg-white transition disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                     >
-                      <span>◀️</span>
+                      <span><FontAwesomeIcon icon={faChevronLeft} /></span>
                       <span>Previous</span>
                     </button>
                     <span className="text-sm font-semibold text-gray-700">
                       Page {currentPage} of {totalPages}
                     </span>
                     <button
-                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                      onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))
+                      }
                       disabled={currentPage === totalPages}
                       className="flex items-center space-x-2 px-4 py-2 border-2 border-gray-200 rounded-lg hover:bg-white transition disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                     >
                       <span>Next</span>
-                      <span>▶️</span>
+                      <span><FontAwesomeIcon icon={faChevronRight} /></span>
                     </button>
                   </div>
                 </div>
@@ -621,34 +677,36 @@ export default function Dashboard() {
             <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-blue-100">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-bold text-gray-900">Expense Stats</h2>
-                <span className="text-2xl">📈</span>
+                <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-blue-50 text-blue-500">
+                <FontAwesomeIcon className='text-xl' icon={faChartLine} />
+                </div>
               </div>
 
               <div className="space-y-4">
 
                 <div className="flex items-center justify-between py-2 border-b border-gray-100">
                   <span className="text-sm font-semibold text-gray-600">Total</span>
-                  <span className="font-bold text-gray-900">${summary.totalExpense.toFixed(2)}</span>
+                  <span className="font-bold text-gray-900">₹{expenseSummary?.totalExpense.toFixed(2)}</span>
                 </div>
 
                 <div className="flex items-center justify-between py-2 border-b border-gray-100">
                   <span className="text-sm font-semibold text-gray-600">Average</span>
-                  <span className="font-bold text-gray-900">${summary.averageExpense.toFixed(2)}</span>
+                  <span className="font-bold text-gray-900">₹{expenseSummary?.averageExpense.toFixed(2)}</span>
                 </div>
 
                 <div className="flex items-center justify-between py-2 border-b border-gray-100">
                   <span className="text-sm font-semibold text-gray-600">Highest</span>
-                  <span className="font-bold text-gray-900">${summary.maxExpense.toFixed(2)}</span>
+                  <span className="font-bold text-gray-900">₹{expenseSummary?.maxExpense.toFixed(2)}</span>
                 </div>
 
                 <div className="flex items-center justify-between py-2 border-b border-gray-100">
                   <span className="text-sm font-semibold text-gray-600">Lowest</span>
-                  <span className="font-bold text-gray-900">${summary.minExpense.toFixed(2)}</span>
+                  <span className="font-bold text-gray-900">₹{expenseSummary?.minExpense.toFixed(2)}</span>
                 </div>
 
                 <div className="flex items-center justify-between pt-2">
                   <span className="text-sm font-semibold text-gray-600">Total Expenses</span>
-                  <span className="font-bold text-gray-900">{summary.countOfExpense}</span>
+                  <span className="font-bold text-gray-900">{expenseSummary?.countOfExpense}</span>
                 </div>
 
               </div>
@@ -659,14 +717,16 @@ export default function Dashboard() {
             <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-blue-100">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-bold text-gray-900">Category Summary</h2>
-                <span className="text-2xl">📊</span>
+                <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-blue-50 text-blue-500">
+                <FontAwesomeIcon className='text-xl' icon={faChartSimple} />
+                </div>
               </div>
 
               <div className="space-y-4">
-                {categorySummary.map((cat) => {
+                {categorySummary?.map((cat) => {
                   const percentage =
-                    summary.totalExpense > 0
-                      ? (cat.totalExpense / summary.totalExpense) * 100
+                    expenseSummary?.totalExpense > 0
+                      ? (cat?.totalExpense / expenseSummary?.totalExpense) * 100
                       : 0;
 
                   return (
@@ -679,7 +739,7 @@ export default function Dashboard() {
                           {getCategoryLabel(cat._id)}
                         </span>
                         <span className="text-lg font-bold text-gray-900">
-                          ${cat.totalExpense.toFixed(2)}
+                          ₹{cat.totalExpense.toFixed(2)}
                         </span>
                       </div>
 
@@ -700,8 +760,8 @@ export default function Dashboard() {
                       </div>
 
                       <div className="mt-2 text-xs text-gray-500 font-medium">
-                        Avg: ${cat.averageExpense.toFixed(2)} • Min: $
-                        {cat.minExpense.toFixed(2)} • Max: $
+                        Avg: ₹{cat.averageExpense.toFixed(2)} • Min: ₹
+                        {cat.minExpense.toFixed(2)} • Max: ₹
                         {cat.maxExpense.toFixed(2)}
                       </div>
                     </div>
@@ -860,7 +920,7 @@ export default function Dashboard() {
                 }}
                 className="text-gray-400 hover:text-gray-600 transition text-2xl"
               >
-                ❌
+                <FontAwesomeIcon icon={faXmark} />
               </button>
             </div>
             <form onSubmit={handleUpdateExpense} className="space-y-4">
@@ -869,7 +929,7 @@ export default function Dashboard() {
                 <input
                   type="number"
                   name="amount"
-                  step="0.01"
+                  step="1"
                   defaultValue={editingExpense.amount}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-medium"
                   required
@@ -893,7 +953,8 @@ export default function Dashboard() {
                 <input
                   type="date"
                   name="date"
-                  defaultValue={editingExpense.date}
+                  defaultValue={new Date(editingExpense.date).toISOString().split("T")[0]}
+                  max={new Date().toLocaleDateString("en-CA")}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none font-medium"
                   required
                 />
@@ -912,6 +973,9 @@ export default function Dashboard() {
                 type="submit"
                 className="w-full bg-linear-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white py-3 rounded-xl font-bold transition shadow-lg hover:shadow-xl transform hover:scale-105"
               >
+                {loader && (
+                  <FontAwesomeIcon icon={faCircleNotch} spin className="mr-2" />
+                )}
                 Update Expense
               </button>
             </form>
