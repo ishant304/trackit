@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useState } from 'react';
 import logo from "./assets/image.png"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBagShopping, faCalendar, faCar, faChartLine, faChartSimple, faChevronLeft, faChevronRight, faCircleExclamation, faCircleNotch, faExclamationTriangle, faFileInvoice, faFilm, faHouse, faPen, faPlus, faSackXmark, faSpinner, faTag, faTrash, faUser, faUtensils, faWallet, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDownWideShort, faBagShopping, faCalendar, faCalendarDays, faCar, faChartLine, faChartSimple, faChevronLeft, faChevronRight, faCircleExclamation, faCircleNotch, faExclamationTriangle, faFileInvoice, faFilm, faHouse, faPen, faPlus, faRotateLeft, faSackXmark, faSliders, faSpinner, faTag, faTrash, faUser, faUtensils, faWallet, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router';
 
 export default function Dashboard() {
@@ -26,10 +26,14 @@ export default function Dashboard() {
 
   const [totalPages, setTotalPages] = useState(1);
   const [totalExpense, setTotalExpense] = useState(1)
-  const [fromDate, setFromDate] = useState('');
-  const [toDate, setToDate] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const [limit] = useState(10);
+
+  const [filters, setFilters] = useState({
+    sort: "latest",
+    time: "all",
+    fromDate: "",
+    toDate: ""
+  });
 
   const navigate = useNavigate();
 
@@ -53,7 +57,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     getExpenses()
-  }, [currentPage])
+  }, [currentPage,filters])
 
   const getProfile = async () => {
 
@@ -79,9 +83,26 @@ export default function Dashboard() {
 
     setExpenseLoader(true)
     setExpenseError(false)
+
+    const queryObj = {}
+
+    if(currentPage){
+      queryObj.page = currentPage
+    }
+    if(filters.sort){
+      queryObj.sort = filters.sort
+    }
+
+    const query = new URLSearchParams(queryObj).toString()
+
+    console.log(query)
+
+    console.log(queryObj)
+
+
     try {
 
-      const rawData = await fetch(`https://trackit-xisc.onrender.com/api/expense?page=${currentPage}`, {
+      const rawData = await fetch(`https://trackit-xisc.onrender.com/api/expense?${query}`, {
         method: "GET",
         credentials: "include"
       })
@@ -105,9 +126,9 @@ export default function Dashboard() {
 
   }
 
-  const getExpenseSummary = async ()=>{
+  const getExpenseSummary = async () => {
 
-    const rawData = await fetch("https://trackit-xisc.onrender.com/api/stats/summary",{
+    const rawData = await fetch("https://trackit-xisc.onrender.com/api/stats/summary", {
       method: "GET",
       credentials: "include"
     })
@@ -118,9 +139,9 @@ export default function Dashboard() {
 
   }
 
-  const getCategorySummary = async ()=>{
-    
-    const rawData = await fetch("https://trackit-xisc.onrender.com/api/stats/category",{
+  const getCategorySummary = async () => {
+
+    const rawData = await fetch("https://trackit-xisc.onrender.com/api/stats/category", {
       method: "GET",
       credentials: "include"
     })
@@ -293,13 +314,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     const interval = setInterval(async () => {
-      
+
       const res = await fetch("https://trackit-xisc.onrender.com")
       const data = await res.text()
 
-    }, 5 * 60 * 1000);  
+    }, 5 * 60 * 1000);
 
-    return () => clearInterval(interval); 
+    return () => clearInterval(interval);
   }, []);
 
   const formatDate = (dateString) => {
@@ -417,54 +438,98 @@ export default function Dashboard() {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-6">
             {/* Search and Filters */}
-            <div className="bg-white rounded-2xl shadow-lg p-6 border-2 border-blue-100">
-              <div className="flex flex-col sm:flex-row gap-4 mb-4">
-                <div className="flex-1 relative">
-                  <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-xl">🔍</span>
-                  <input
-                    type="text"
-                    placeholder="Search by description..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition font-medium"
-                  />
-                </div>
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={`flex items-center space-x-2 px-5 py-3 rounded-xl transition-all font-semibold ${showFilters
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'border-2 border-gray-200 hover:bg-gray-50 text-gray-700'
-                    }`}
-                >
-                  <span className="text-xl">🎚️</span>
-                  <span>Filters</span>
-                </button>
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
 
+              <div className="flex-1 flex items-center gap-2 px-4 py-2.5 border-2 border-gray-200 rounded-xl hover:border-blue-400 transition">
+                <FontAwesomeIcon icon={faArrowDownWideShort} className="text-blue-500" />
+                <select
+                  value={filters.sort}
+                  onChange={(e) => setFilters((prev) => ({ ...prev, sort: e.target.value }))}
+                  className="w-full bg-transparent outline-none font-medium text-gray-700 cursor-pointer"
+                >
+                  <option value="latest">Newest First</option>
+                  <option value="high">Highest Amount</option>
+                  <option value="low">Lowest Amount</option>
+                </select>
               </div>
 
-              {showFilters && (
-                <div className="pt-4 border-t-2 border-gray-100 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">From Date</label>
-                    <input
-                      type="date"
-                      value={fromDate}
-                      onChange={(e) => setFromDate(e.target.value)}
-                      className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-medium"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-gray-700 mb-2 uppercase tracking-wide">To Date</label>
-                    <input
-                      type="date"
-                      value={toDate}
-                      onChange={(e) => setToDate(e.target.value)}
-                      className="w-full px-4 py-2.5 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none font-medium"
-                    />
-                  </div>
-                </div>
-              )}
+              <div className="flex-1 flex items-center gap-2 px-4 py-2.5 border-2 border-gray-200 rounded-xl hover:border-blue-400 transition">
+                <FontAwesomeIcon icon={faCalendarDays} className="text-blue-500" />
+                <select
+                  value={filters.time}
+                  onChange={(e) => setFilters(prev => ({ ...prev, time: e.target.value }))}
+                  className="w-full bg-transparent outline-none font-medium text-gray-700 cursor-pointer"
+                >
+                  <option value="all">All Time</option>
+                  <option value="7d">Last 7 Days</option>
+                  <option value="30d">This Month</option>
+                  <option value="last 30d">Last Month</option>
+                </select>
+              </div>
+
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all border-2 ${showFilters
+                  ? "bg-blue-600 text-white border-blue-600 shadow-md"
+                  : "border-gray-200 text-gray-700 hover:bg-gray-50"
+                  }`}
+              >
+                <FontAwesomeIcon icon={faSliders} />
+                Advanced Filters
+              </button>
+
             </div>
+
+            {showFilters && (
+              <div className="mt-6 pt-5 border-t-2 border-gray-100 flex flex-col sm:flex-row gap-4 items-end">
+
+                <div className="flex-1 w-full">
+                  <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
+                    From Date
+                  </label>
+                  <input
+                    type="date"
+                    value={filters.fromDate}
+                    onChange={(e) => setFilters(prev => ({ ...prev, fromDate: e.target.value }))}
+                    max={new Date().toLocaleDateString("en-CA")}
+                    className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+
+                <div className="flex-1 w-full">
+                  <label className="text-xs font-bold text-gray-500 uppercase mb-2 block">
+                    To Date
+                  </label>
+                  <input
+                    type="date"
+                    value={filters.toDate}
+                    onChange={(e) => setFilters(prev => ({ ...prev, toDate: e.target.value }))}
+                    max={new Date().toLocaleDateString("en-CA")}
+                    className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
+                  />
+                </div>
+
+                <div className="flex-1 w-full">
+                  <button
+                    onClick={() => setFilters({
+                      sort: "latest",
+                      time: "all",
+                      fromDate: "",
+                      toDate: ""
+                    })}
+                    className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold 
+                    transition-all duration-150 hover:bg-gray-50 active:scale-95"
+                  >
+                    <FontAwesomeIcon
+                      icon={faRotateLeft}
+                      className="transition-transform duration-200 group-active:rotate-180"
+                    />
+                    Clear
+                  </button>
+                </div>
+
+              </div>
+            )}
 
             {/* Category Filter Pills */}
             <div className="flex flex-wrap gap-2">
@@ -678,7 +743,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-bold text-gray-900">Expense Stats</h2>
                 <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-blue-50 text-blue-500">
-                <FontAwesomeIcon className='text-xl' icon={faChartLine} />
+                  <FontAwesomeIcon className='text-xl' icon={faChartLine} />
                 </div>
               </div>
 
@@ -718,7 +783,7 @@ export default function Dashboard() {
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-lg font-bold text-gray-900">Category Summary</h2>
                 <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-blue-50 text-blue-500">
-                <FontAwesomeIcon className='text-xl' icon={faChartSimple} />
+                  <FontAwesomeIcon className='text-xl' icon={faChartSimple} />
                 </div>
               </div>
 

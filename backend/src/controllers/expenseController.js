@@ -48,13 +48,25 @@ export const getExpense = async (req, resp) => {
         filter.date.$lte = toDate
     }
 
+    let sort = {}
+
+    if(req.query.sort==="high"){
+       sort = { amount : -1} 
+    }
+    else if(req.query.sort==="low"){
+        sort = { amount : 1}
+    }
+    else{
+        sort = {date : -1}
+    }
+
     const page = parseInt(req.query.page) || 1
     const limit = parseInt(req.query.limit) || 10
 
     const skip = (page - 1) * limit
 
     try {
-        const expenseList = await Expense.find(filter).sort({ date: -1 }).lean().skip(skip).limit(limit)
+        const expenseList = await Expense.find(filter).sort(sort).lean().skip(skip).limit(limit)
 
         const totalExpense = await Expense.countDocuments(filter)
 
