@@ -6,9 +6,7 @@ import { faArrowDownWideShort, faBagShopping, faCalendar, faCalendarDays, faCar,
 import { useNavigate } from 'react-router';
 
 export default function Dashboard() {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [showFilters, setShowFilters] = useState(false);
+
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showEditExpense, setShowEditExpense] = useState(false);
   const [editingExpense, setEditingExpense] = useState(null);
@@ -28,36 +26,29 @@ export default function Dashboard() {
   const [totalExpense, setTotalExpense] = useState(1)
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [showFilters, setShowFilters] = useState(false);
   const [filters, setFilters] = useState({
     sort: "latest",
     time: "all",
     fromDate: "",
-    toDate: ""
+    toDate: "",
+    category: "all"
   });
 
   const navigate = useNavigate();
 
-  const categories = [
-    { value: 'all', label: 'All' },
-    { value: 'rent', label: 'Rent' },
-    { value: 'food', label: 'Food' },
-    { value: 'travel', label: 'Travel' },
-    { value: 'bills', label: 'Bills' },
-    { value: 'misc', label: 'Misc' },
-    { value: 'entertainment', label: 'Entertainment' },
-    { value: 'shopping', label: 'Shopping' },
-    { value: 'others', label: 'Others' }
-  ];
-
   useEffect(() => {
     getProfile();
-    getExpenseSummary();
-    getCategorySummary();
   }, [])
 
   useEffect(() => {
+    getExpenseSummary();
+    getCategorySummary();
+  }, [expense])
+
+  useEffect(() => {
     getExpenses()
-  }, [currentPage,filters])
+  }, [currentPage, filters])
 
   const getProfile = async () => {
 
@@ -86,11 +77,59 @@ export default function Dashboard() {
 
     const queryObj = {}
 
-    if(currentPage){
+    if (currentPage) {
       queryObj.page = currentPage
     }
-    if(filters.sort){
+    if (filters.sort) {
       queryObj.sort = filters.sort
+    }
+    if (filters.toDate) {
+      queryObj.to = filters.toDate
+    }
+    if (filters.fromDate) {
+      queryObj.from = filters.fromDate
+    }
+    if (filters.time !== "all") {
+      const today = new Date()
+      if (filters.time === "7d") {
+        const fromDate = new Date(today)
+        fromDate.setDate(today.getDate() - 6)
+
+        const date = `${fromDate.getFullYear()}-${fromDate.getMonth() + 1}-${fromDate.getDate()}`
+
+        queryObj.from = date
+
+      }
+      else if (filters.time === "this month") {
+
+        const fromDate = new Date(today.getFullYear(), today.getMonth(), 1)
+
+        const date = `${fromDate.getFullYear()}-${fromDate.getMonth() + 1}-${fromDate.getDate()}`
+
+        console.log(date)
+
+        queryObj.from = date
+
+      }
+      else if (filters.time === "last month") {
+
+        const fromDate = new Date(today.getFullYear(), today.getMonth() - 1, 1);
+
+        const toDate = new Date(today.getFullYear(), today.getMonth(), 0);
+
+        const startDate = `${fromDate.getFullYear()}-${fromDate.getMonth() + 1}-${fromDate.getDate()}`;
+        const endDate = `${toDate.getFullYear()}-${toDate.getMonth() + 1}-${toDate.getDate()}`;
+
+        console.log(startDate + endDate)
+
+        queryObj.from = startDate;
+        queryObj.to = endDate;
+
+      }
+    }
+
+    if (filters.category !== "all") {
+      queryObj.category = filters.category
     }
 
     const query = new URLSearchParams(queryObj).toString()
@@ -152,6 +191,17 @@ export default function Dashboard() {
 
   }
 
+  const categories = [
+    { value: 'all', label: 'All' },
+    { value: 'rent', label: 'Rent' },
+    { value: 'food', label: 'Food' },
+    { value: 'travel', label: 'Travel' },
+    { value: 'bills', label: 'Bills' },
+    { value: 'misc', label: 'Misc' },
+    { value: 'entertainment', label: 'Entertainment' },
+    { value: 'shopping', label: 'Shopping' },
+    { value: 'others', label: 'Others' }
+  ];
 
   const getCategoryIcon = (category) => {
     const icons = {
@@ -165,13 +215,6 @@ export default function Dashboard() {
     };
     return icons[category] || faTag;
   }
-
-
-  let filteredExpenses = expense.filter(expense => {
-    const matchesSearch = expense.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || expense.category === selectedCategory;
-    return matchesSearch && matchesCategory;
-  });
 
   const handleAddExpense = async (e) => {
     e.preventDefault();
@@ -444,7 +487,10 @@ export default function Dashboard() {
                 <FontAwesomeIcon icon={faArrowDownWideShort} className="text-blue-500" />
                 <select
                   value={filters.sort}
-                  onChange={(e) => setFilters((prev) => ({ ...prev, sort: e.target.value }))}
+                  onChange={(e) => {
+                    setFilters((prev) => ({ ...prev, sort: e.target.value })),
+                      setCurrentPage(1)
+                  }}
                   className="w-full bg-transparent outline-none font-medium text-gray-700 cursor-pointer"
                 >
                   <option value="latest">Newest First</option>
@@ -457,13 +503,16 @@ export default function Dashboard() {
                 <FontAwesomeIcon icon={faCalendarDays} className="text-blue-500" />
                 <select
                   value={filters.time}
-                  onChange={(e) => setFilters(prev => ({ ...prev, time: e.target.value }))}
+                  onChange={(e) => {
+                    setFilters(prev => ({ ...prev, time: e.target.value })),
+                      setCurrentPage(1)
+                  }}
                   className="w-full bg-transparent outline-none font-medium text-gray-700 cursor-pointer"
                 >
                   <option value="all">All Time</option>
                   <option value="7d">Last 7 Days</option>
-                  <option value="30d">This Month</option>
-                  <option value="last 30d">Last Month</option>
+                  <option value="this month">This Month</option>
+                  <option value="last month">Last Month</option>
                 </select>
               </div>
 
@@ -490,7 +539,10 @@ export default function Dashboard() {
                   <input
                     type="date"
                     value={filters.fromDate}
-                    onChange={(e) => setFilters(prev => ({ ...prev, fromDate: e.target.value }))}
+                    onChange={(e) => {
+                      setFilters(prev => ({ ...prev, fromDate: e.target.value })),
+                        setCurrentPage(1)
+                    }}
                     max={new Date().toLocaleDateString("en-CA")}
                     className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   />
@@ -503,7 +555,10 @@ export default function Dashboard() {
                   <input
                     type="date"
                     value={filters.toDate}
-                    onChange={(e) => setFilters(prev => ({ ...prev, toDate: e.target.value }))}
+                    onChange={(e) => {
+                      setFilters(prev => ({ ...prev, toDate: e.target.value })),
+                        setCurrentPage(1)
+                    }}
                     max={new Date().toLocaleDateString("en-CA")}
                     className="w-full px-3 py-2.5 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none"
                   />
@@ -511,12 +566,16 @@ export default function Dashboard() {
 
                 <div className="flex-1 w-full">
                   <button
-                    onClick={() => setFilters({
-                      sort: "latest",
-                      time: "all",
-                      fromDate: "",
-                      toDate: ""
-                    })}
+                    onClick={() => {
+                      setFilters({
+                        sort: "latest",
+                        time: "all",
+                        fromDate: "",
+                        toDate: "",
+                        category: "all"
+                      }),
+                        setCurrentPage(1)
+                    }}
                     className="w-full flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border-2 border-gray-200 text-gray-700 font-semibold 
                     transition-all duration-150 hover:bg-gray-50 active:scale-95"
                   >
@@ -536,8 +595,11 @@ export default function Dashboard() {
               {categories.map((category) => (
                 <button
                   key={category.value}
-                  onClick={() => setSelectedCategory(category.value)}
-                  className={`px-5 py-2.5 rounded-full font-semibold transition-all transform hover:scale-105 ${selectedCategory === category.value
+                  onClick={() => {
+                    setFilters(prev => ({ ...prev, category: category.value })),
+                      setCurrentPage(1)
+                  }}
+                  className={`px-5 py-2.5 rounded-full font-semibold transition-all transform hover:scale-105 ${filters.category === category.value
                     ? 'bg-linear-to-r from-blue-600 to-indigo-600 text-white shadow-lg'
                     : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-blue-300 shadow-sm'
                     }`}
@@ -560,26 +622,61 @@ export default function Dashboard() {
 
               {/* Expense Items */}
               {expenseLoader ? (
-                <div className="p-10 flex flex-col items-center justify-center gap-4">
+                // <div className="p-10 flex flex-col items-center justify-center gap-4">
 
-                  <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50">
-                    <FontAwesomeIcon
-                      icon={faCircleNotch}
-                      spin
-                      className="text-blue-500 text-2xl"
-                    />
+                //   <div className="flex items-center justify-center w-12 h-12 rounded-full bg-blue-50">
+                //     <FontAwesomeIcon
+                //       icon={faCircleNotch}
+                //       spin
+                //       className="text-blue-500 text-2xl"
+                //     />
+                //   </div>
+
+                //   <div className="text-center">
+                //     <p className="text-gray-800 text-xl font-semibold">
+                //       Fetching your expenses…
+                //     </p>
+                //     <p className="text-gray-400 text-base mt-1 animate-pulse">
+                //       Preparing your dashboard
+                //     </p>
+                //   </div>
+
+                // </div>
+
+                Array.from({ length: 5 }).map((_, i) => (
+                  <div
+                    key={i}
+                    className="bg-white rounded-xl border-2 border-gray-100 overflow-hidden"
+                  >
+                    <div className="p-6 pl-8">
+                      <div className="flex items-start justify-between gap-4">
+
+                        <div className="flex-1 min-w-0 animate-pulse">
+
+                          <div className="flex items-center gap-3 mb-3 flex-wrap">
+                            <div className="h-7 w-28 rounded-lg bg-blue-100 border border-blue-200"></div>
+                            <div className="h-5 w-24 rounded bg-gray-200"></div>
+                          </div>
+
+                          <div className="space-y-2 mb-3">
+                            <div className="h-4 w-[85%] bg-gray-200 rounded"></div>
+                            <div className="h-4 w-[60%] bg-gray-200 rounded"></div>
+                          </div>
+
+                          <div className="flex items-baseline gap-2">
+                            <div className="h-8 w-24 bg-blue-200 rounded"></div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-start gap-2 shrink-0 animate-pulse">
+                          <div className="w-12 h-12 rounded-lg bg-blue-100"></div>
+                          <div className="w-12 h-12 rounded-lg bg-blue-100"></div>
+                        </div>
+
+                      </div>
+                    </div>
                   </div>
-
-                  <div className="text-center">
-                    <p className="text-gray-800 text-xl font-semibold">
-                      Fetching your expenses…
-                    </p>
-                    <p className="text-gray-400 text-base mt-1 animate-pulse">
-                      Preparing your dashboard
-                    </p>
-                  </div>
-
-                </div>
+                ))
               ) : expenseError ?
                 (
                   <div className="p-10 flex flex-col items-center justify-center gap-4">
@@ -611,7 +708,7 @@ export default function Dashboard() {
                 ) :
                 (
                   <div className="divide-y-2 divide-gray-100">
-                    {filteredExpenses.length === 0 ? (
+                    {expense.length === 0 ? (
                       <div className="p-12 flex flex-col items-center justify-center text-center">
 
                         <div className="relative mb-4">
@@ -638,7 +735,7 @@ export default function Dashboard() {
 
                       </div>
                     ) : (
-                      filteredExpenses.map((expense) => (
+                      expense.map((expense) => (
                         <div key={expense._id} className="group relative bg-white rounded-xl border-2 border-gray-100 hover:border-blue-200 hover:shadow-lg transition-all duration-300 overflow-hidden">
 
                           <div className="p-6 pl-8">
@@ -697,8 +794,6 @@ export default function Dashboard() {
                 )
 
               }
-
-
 
 
               {/* Pagination */}

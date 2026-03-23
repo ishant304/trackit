@@ -57,7 +57,7 @@ export const getExpense = async (req, resp) => {
         sort = { amount : 1}
     }
     else{
-        sort = {date : -1}
+        sort = { date: -1, createdAt: -1 }
     }
 
     const page = parseInt(req.query.page) || 1
