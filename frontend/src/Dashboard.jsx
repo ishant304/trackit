@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { useState } from 'react';
 import logo from "./assets/image.png"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faArrowDownWideShort, faBagShopping, faCalendar, faCalendarDays, faCar, faChartLine, faChartSimple, faChevronLeft, faChevronRight, faCircleExclamation, faCircleNotch, faExclamationTriangle, faFileInvoice, faFilm, faHouse, faPen, faPlus, faRotateLeft, faSackXmark, faSliders, faSpinner, faTag, faTrash, faUser, faUtensils, faWallet, faXmark } from '@fortawesome/free-solid-svg-icons';
+import { faArrowDownWideShort, faBagShopping, faCalendarDays, faCar, faChartLine, faChartSimple, faChevronLeft, faChevronRight, faCircleExclamation, faCircleNotch, faFileInvoice, faFilm, faHouse, faPen, faPlus, faRotateLeft, faSackXmark, faSliders, faTag, faTrash, faUser, faUtensils, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router';
 
 export default function Dashboard() {
@@ -106,7 +106,6 @@ export default function Dashboard() {
 
         const date = `${fromDate.getFullYear()}-${fromDate.getMonth() + 1}-${fromDate.getDate()}`
 
-        console.log(date)
 
         queryObj.from = date
 
@@ -120,7 +119,6 @@ export default function Dashboard() {
         const startDate = `${fromDate.getFullYear()}-${fromDate.getMonth() + 1}-${fromDate.getDate()}`;
         const endDate = `${toDate.getFullYear()}-${toDate.getMonth() + 1}-${toDate.getDate()}`;
 
-        console.log(startDate + endDate)
 
         queryObj.from = startDate;
         queryObj.to = endDate;
@@ -134,9 +132,6 @@ export default function Dashboard() {
 
     const query = new URLSearchParams(queryObj).toString()
 
-    console.log(query)
-
-    console.log(queryObj)
 
 
     try {
@@ -221,7 +216,6 @@ export default function Dashboard() {
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData.entries());
     data.amount = parseFloat(data.amount)
-    console.log(data)
 
     try {
       setLoader(true)
@@ -237,7 +231,7 @@ export default function Dashboard() {
       if (!rawData.ok) {
         throw new Error("Expense not posted on server");
       }
-      await getExpenses()
+
     }
     catch (err) {
       console.error(err)
@@ -246,6 +240,7 @@ export default function Dashboard() {
       setLoader(false)
     }
     setShowAddExpense(false);
+    await getExpenses()
   };
 
 
@@ -259,7 +254,6 @@ export default function Dashboard() {
     const rawFormData = new FormData(e.target);
     const formData = Object.fromEntries(rawFormData.entries())
     formData.amount = parseFloat(formData.amount)
-    console.log(formData)
 
     try {
       setLoader(true)
@@ -276,8 +270,6 @@ export default function Dashboard() {
       if (!resp.ok) {
         throw new Error("Can not edit the response");
       }
-
-      await getExpenses()
     }
     catch (err) {
       console.error(err)
@@ -285,7 +277,9 @@ export default function Dashboard() {
     finally {
       setShowEditExpense(false);
       setEditingExpense(null);
+      setLoader(false)
     }
+    await getExpenses()
   };
 
   const handleDeleteExpense = async (id) => {
@@ -313,7 +307,6 @@ export default function Dashboard() {
         throw new Error("Failed to delete expense");
       }
 
-      await getExpenses()
     }
     catch (err) {
       console.error(err)
@@ -323,6 +316,8 @@ export default function Dashboard() {
       setDeleteModal(false)
       setExpenseToDelete(null)
     }
+
+    await getExpenses()
 
   }
 
@@ -343,7 +338,6 @@ export default function Dashboard() {
 
       const cookedResp = await resp.json()
 
-      console.log(cookedResp)
 
       setLoader(false)
       navigate("/")
