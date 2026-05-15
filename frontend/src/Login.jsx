@@ -79,7 +79,7 @@ function Login() {
             throw new Error(data.msg);
           }
 
-          navigate("/dashboard", { state: { fromLogin: true } });
+          navigate("/", { state: { fromLogin: true } });
           setLoginLoader(false)
         }
         catch (err) {

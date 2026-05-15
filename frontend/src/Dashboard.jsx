@@ -340,7 +340,7 @@ export default function Dashboard() {
 
 
       setLoader(false)
-      navigate("/")
+      navigate("/login")
 
     }
     catch (err) {

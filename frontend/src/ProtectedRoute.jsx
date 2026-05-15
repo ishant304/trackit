@@ -41,7 +41,7 @@ const ProtectedRoute = ({ children }) => {
             } catch (err) {
                 console.log("Auth check failed:", err);
                 setIsAuth(false);
-                navigate("/", { replace: true });
+                navigate("/login", { replace: true });
             } finally {
                 clearTimeout(timeout);
                 setLoading(false);
