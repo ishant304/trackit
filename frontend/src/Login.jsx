@@ -29,7 +29,7 @@ function Login() {
       setServerState("loading")
 
       try {
-        const res = await fetch("https://trackit-xisc.onrender.com")
+        const res = await fetch("/api")
 
         if (!res.ok) {
           throw new Error("Server not reachable")
@@ -66,7 +66,7 @@ function Login() {
           setErrorMessage("")
           setLoginLoader(true)
 
-          const rawData = await fetch("https://trackit-xisc.onrender.com/api/user/login", {
+          const rawData = await fetch("/api/api/user/login", {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
@@ -107,7 +107,7 @@ function Login() {
             
           }
 
-          const rawData = await fetch("https://trackit-xisc.onrender.com/api/user/register", {
+          const rawData = await fetch("/api/api/user/register", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(formData)

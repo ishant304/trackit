@@ -27,7 +27,7 @@ const ProtectedRoute = ({ children }) => {
             try {
 
                 const res = await fetch(
-                    "https://trackit-xisc.onrender.com/api/user/profile",
+                    "/api/api/user/profile",
                     {
                         credentials: "include",
                         signal: controller.signal,

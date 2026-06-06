@@ -54,7 +54,7 @@ export default function Dashboard() {
 
     try {
 
-      const rawData = await fetch("https://trackit-xisc.onrender.com/api/user/profile", {
+      const rawData = await fetch("/api/api/user/profile", {
         method: "GET",
         credentials: "include"
       })
@@ -136,7 +136,7 @@ export default function Dashboard() {
 
     try {
 
-      const rawData = await fetch(`https://trackit-xisc.onrender.com/api/expense?${query}`, {
+      const rawData = await fetch(`/api//api/expense?${query}`, {
         method: "GET",
         credentials: "include"
       })
@@ -162,7 +162,7 @@ export default function Dashboard() {
 
   const getExpenseSummary = async () => {
 
-    const rawData = await fetch("https://trackit-xisc.onrender.com/api/stats/summary", {
+    const rawData = await fetch("/api/api/stats/summary", {
       method: "GET",
       credentials: "include"
     })
@@ -175,7 +175,7 @@ export default function Dashboard() {
 
   const getCategorySummary = async () => {
 
-    const rawData = await fetch("https://trackit-xisc.onrender.com/api/stats/category", {
+    const rawData = await fetch("/api/api/stats/category", {
       method: "GET",
       credentials: "include"
     })
@@ -220,7 +220,7 @@ export default function Dashboard() {
     try {
       setLoader(true)
 
-      const rawData = await fetch("https://trackit-xisc.onrender.com/api/expense", {
+      const rawData = await fetch("/api/api/expense", {
         method: "POST",
         credentials: "include",
         headers: {
@@ -258,7 +258,7 @@ export default function Dashboard() {
     try {
       setLoader(true)
 
-      const resp = await fetch(`https://trackit-xisc.onrender.com/api/expense/${editingExpense._id}`, {
+      const resp = await fetch(`/api/api/expense/${editingExpense._id}`, {
         method: "PUT",
         credentials: "include",
         headers: {
@@ -298,7 +298,7 @@ export default function Dashboard() {
     try {
       setLoader(true)
 
-      const resp = await fetch(`https://trackit-xisc.onrender.com/api/expense/${expenseToDelete}`, {
+      const resp = await fetch(`/api/api/expense/${expenseToDelete}`, {
         method: "DELETE",
         credentials: "include"
       })
@@ -327,7 +327,7 @@ export default function Dashboard() {
 
       setLoader(true)
 
-      const resp = await fetch("https://trackit-xisc.onrender.com/api/user/logout", {
+      const resp = await fetch("/api/api/user/logout", {
         method: "GET",
         credentials: "include"
       })
@@ -352,7 +352,7 @@ export default function Dashboard() {
   useEffect(() => {
     const interval = setInterval(async () => {
 
-      const res = await fetch("https://trackit-xisc.onrender.com")
+      const res = await fetch("/api")
       const data = await res.text()
 
     }, 5 * 60 * 1000);
