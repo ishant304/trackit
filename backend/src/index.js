@@ -1,13 +1,15 @@
+import dotenv from "dotenv"
+dotenv.config()
+
 import express from 'express'
 import connectDB from './config/db.js';
 import cors from 'cors'
 import cookieParser from "cookie-parser"
-import dotenv from "dotenv"
 import userRoutes from "./routes/userRoutes.js"
 import expenseRoutes from "./routes/expenseRoutes.js"
 import statsRoutes from "./routes/statsRoutes.js"
+import geminiRoutes from "./routes/geminiRoutes.js"
 
-dotenv.config()
 
 connectDB();
 
@@ -34,6 +36,8 @@ app.use("/api/user", userRoutes)
 app.use("/api/expense", expenseRoutes)
 
 app.use("/api/stats" , statsRoutes)
+
+app.use("/api/gemini", geminiRoutes)
 
 
 

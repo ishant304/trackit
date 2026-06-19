@@ -11,6 +11,7 @@
   "author": "Ishant",
   "license": "ISC",
   "dependencies": {
+    "@google/genai": "^2.8.0",
     "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
@@ -18,7 +19,10 @@
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.1.5",
+    "multer": "^2.2.0",
     "nodemon": "^3.1.11",
-    "web-parser": "^2.0.1"
+    "web-parser": "^2.0.1",
+    "xlsx": "^0.18.5",
+    "zod": "^4.4.3"
   }
 }
