@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/:path*",
-      "destination": "https://trackit-xisc.onrender.com/:path*"
+      "destination": "https://trackit-xisc.onrender.com/api/:path*"
     },
     {
       "source": "/(.*)",
