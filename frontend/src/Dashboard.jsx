@@ -4,6 +4,7 @@ import logo from "./assets/image.png"
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowDownWideShort, faBagShopping, faCalendarDays, faCar, faChartLine, faChartSimple, faChevronLeft, faChevronRight, faCircleExclamation, faCircleNotch, faFileInvoice, faFilm, faHouse, faPen, faPlus, faRotateLeft, faSackXmark, faSliders, faTag, faTrash, faUser, faUtensils, faXmark } from '@fortawesome/free-solid-svg-icons';
 import { useNavigate } from 'react-router';
+import { BASE_API } from './lib/api.js';
 
 export default function Dashboard() {
 
@@ -54,7 +55,7 @@ export default function Dashboard() {
 
     try {
 
-      const rawData = await fetch("/api/api/user/profile", {
+      const rawData = await fetch(`${BASE_API}/api/user/profile`, {
         method: "GET",
         credentials: "include"
       })
@@ -136,7 +137,7 @@ export default function Dashboard() {
 
     try {
 
-      const rawData = await fetch(`/api//api/expense?${query}`, {
+      const rawData = await fetch(`${BASE_API}/api/expense?${query}`, {
         method: "GET",
         credentials: "include"
       })
@@ -162,7 +163,7 @@ export default function Dashboard() {
 
   const getExpenseSummary = async () => {
 
-    const rawData = await fetch("/api/api/stats/summary", {
+    const rawData = await fetch(`${BASE_API}/api/stats/summary`, {
       method: "GET",
       credentials: "include"
     })
@@ -175,7 +176,7 @@ export default function Dashboard() {
 
   const getCategorySummary = async () => {
 
-    const rawData = await fetch("/api/api/stats/category", {
+    const rawData = await fetch(`${BASE_API}/api/stats/category`, {
       method: "GET",
       credentials: "include"
     })
@@ -220,7 +221,7 @@ export default function Dashboard() {
     try {
       setLoader(true)
 
-      const rawData = await fetch("/api/api/expense", {
+      const rawData = await fetch(`${BASE_API}/api/expense`, {
         method: "POST",
         credentials: "include",
         headers: {
@@ -258,7 +259,7 @@ export default function Dashboard() {
     try {
       setLoader(true)
 
-      const resp = await fetch(`/api/api/expense/${editingExpense._id}`, {
+      const resp = await fetch(`${BASE_API}/api/expense/${editingExpense._id}`, {
         method: "PUT",
         credentials: "include",
         headers: {
@@ -298,7 +299,7 @@ export default function Dashboard() {
     try {
       setLoader(true)
 
-      const resp = await fetch(`/api/api/expense/${expenseToDelete}`, {
+      const resp = await fetch(`${BASE_API}/api/expense/${expenseToDelete}`, {
         method: "DELETE",
         credentials: "include"
       })
@@ -327,7 +328,7 @@ export default function Dashboard() {
 
       setLoader(true)
 
-      const resp = await fetch("/api/api/user/logout", {
+      const resp = await fetch(`${BASE_API}/api/user/logout`, {
         method: "GET",
         credentials: "include"
       })
@@ -352,7 +353,7 @@ export default function Dashboard() {
   useEffect(() => {
     const interval = setInterval(async () => {
 
-      const res = await fetch("/api")
+      const res = await fetch(`${BASE_API}/api`)
       const data = await res.text()
 
     }, 5 * 60 * 1000);
@@ -391,7 +392,7 @@ export default function Dashboard() {
               </div>
             </div>
 
-            <div className="flex flex-row justify-center">
+            <div className="flex flex-row justify-center gap-3 items-center">
 
               <button
                 onClick={() => setShowAddExpense(true)}
@@ -400,6 +401,15 @@ export default function Dashboard() {
                 <span className="text-base sm:text-xl"><FontAwesomeIcon icon={faPlus} /></span>
                 <span>Add Expense</span>
               </button>
+
+              <button
+                onClick={() => navigate('/statement-upload')}
+                className="bg-white border-2 border-blue-200 hover:border-blue-300 text-blue-700 sm:px-5 px-3 rounded-xl flex items-center space-x-2 transition shadow-sm hover:shadow-md transform hover:-translate-y-0.5 font-semibold sm:text-base text-sm py-2.5"
+              >
+                <span className="text-base sm:text-xl"><FontAwesomeIcon icon={faFileInvoice} /></span>
+                <span>Import Statement</span>
+              </button>
+
               <div className="relative">
 
                 <button

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useLocation, Navigate } from "react-router";
+import { BASE_API } from "./lib/api.js";
 
 const ProtectedRoute = ({ children }) => {
 
@@ -27,7 +28,7 @@ const ProtectedRoute = ({ children }) => {
             try {
 
                 const res = await fetch(
-                    "/api/api/user/profile",
+                    `${BASE_API}/api/user/profile`,
                     {
                         credentials: "include",
                         signal: controller.signal,

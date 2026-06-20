@@ -3,6 +3,7 @@ import logo from "./assets/ChatGPT Image Feb 8, 2026, 02_54_59 AM.png"
 import { faCircleCheck, faCircleExclamation, faCircleNotch, faEye, faEyeSlash, faSpinner, faXmarkCircle } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { useNavigate } from 'react-router';
+import { BASE_API } from './lib/api.js';
 
 function Login() {
   const [isLogin, setIsLogin] = useState(true);
@@ -29,24 +30,24 @@ function Login() {
       setServerState("loading")
 
       try {
-        const res = await fetch("/api")
+        const res = await fetch(`${BASE_API}/api`)
 
-        if (!res.ok) {
+        if (!res.ok && res.status < 500) {
           throw new Error("Server not reachable")
         }
-
-        const data = await res.text()
       } catch (error) {
         console.error(error)
         setServerText("Unable to reach TrackIt server. Please try again.")
         setServerState("error")
+        return
       } finally {
-        setServerText("TrackIt servers are ready.")
-        setServerState("success")
         setTimeout(() => {
           setServerLoader(false)
         }, 3000);
       }
+
+      setServerText("TrackIt servers are ready.")
+      setServerState("success")
     }
 
     checkServer()
@@ -66,7 +67,10 @@ function Login() {
           setErrorMessage("")
           setLoginLoader(true)
 
-          const rawData = await fetch("/api/api/user/login", {
+          console.log(BASE_API)
+          console.log(import.meta.env);
+
+          const rawData = await fetch(`${BASE_API}/api/user/login`, {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
@@ -107,7 +111,7 @@ function Login() {
             
           }
 
-          const rawData = await fetch("/api/api/user/register", {
+          const rawData = await fetch(`${BASE_API}/api/user/register`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(formData)

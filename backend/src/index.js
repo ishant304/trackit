@@ -27,7 +27,7 @@ app.use(cors({
 app.use(express.json())
 app.use(cookieParser())
 
-app.get("/",(req,resp)=>{
+app.get("/api",(req,resp)=>{
     resp.send("Backend is running")
 })
 
